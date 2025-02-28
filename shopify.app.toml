@@ -1,0 +1,28 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "6e13fe07a5e7958aaf8e94fb0215e420"
+application_url = "https://routers-emperor-cant-amplifier.trycloudflare.com"
+embedded = true
+name = "causalApp"
+handle = "causalapp-1"
+
+[build]
+include_config_on_deploy = true
+automatically_update_urls_on_dev = true
+
+[webhooks]
+api_version = "2025-01"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+
+[auth]
+redirect_urls = [
+  "https://routers-emperor-cant-amplifier.trycloudflare.com/auth/callback",
+  "https://routers-emperor-cant-amplifier.trycloudflare.com/auth/shopify/callback",
+  "https://routers-emperor-cant-amplifier.trycloudflare.com/api/auth/callback"
+]
+
+[pos]
+embedded = false
