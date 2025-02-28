@@ -5,6 +5,7 @@ import '@shopify/polaris/build/esm/styles.css';
 import Routes from "./Routes";
 
 import { QueryProvider, PolarisProvider } from "./components";
+import { AppProvider } from "@shopify/polaris";
 
 export default function App() {
   // Any .tsx or .jsx files in /pages will become a route
@@ -15,6 +16,7 @@ export default function App() {
   const { t } = useTranslation();
 
   return (
+    <AppProvider i18n={{}}>
     <PolarisProvider>
       <BrowserRouter>
         <QueryProvider>
@@ -26,5 +28,6 @@ export default function App() {
         </QueryProvider>
       </BrowserRouter>
     </PolarisProvider>
+    </AppProvider>
   );
 }

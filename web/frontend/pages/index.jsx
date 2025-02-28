@@ -1,93 +1,88 @@
+import { useState } from "react";
 import {
   Card,
   Page,
   Layout,
-  TextContainer,
-  Image,
-  Stack,
-  Link,
-  Text,
+  AppProvider,
+  Tabs,
+  Frame,
+  TopBar,
+  Navigation,
+  SkeletonPage,
+  Box
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { useTranslation, Trans } from "react-i18next";
-
-import { trophyImage } from "../assets";
-
-import { ProductsCard } from "../components";
+import SurveyCreator from "../components/SurveyCreator"
+import SurveyResults from "../components/SurveyResults"
+import "@shopify/polaris/build/esm/styles.css"
+import { HomeFilledIcon, QuestionCircleIcon, ChartVerticalFilledIcon, SettingsFilledIcon } from "@shopify/polaris-icons"
 
 export default function HomePage() {
   const { t } = useTranslation();
-  return (
-    <Page narrowWidth>
-      <TitleBar title={t("HomePage.title")} />
+  const [selected, setSelected] = useState(0)
+  const [isSearchActive, setIsSearchActive] = useState(false)
+  const [searchValue, setSearchValue] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleTabChange = (selectedTabIndex) => setSelected(selectedTabIndex)
+
+
+  const tabs = [
+    {
+      id: "create-survey",
+      content: "Create Survey",
+      accessibilityLabel: "Create and manage surveys",
+      panelID: "create-survey-panel",
+    },
+    {
+      id: "survey-results",
+      content: "Survey Results",
+      accessibilityLabel: "View survey results and analytics",
+      panelID: "survey-results-panel",
+    },
+  ]
+
+
+
+
+
+  const topBarMarkup = (
+    <TopBar
+    />
+  )
+
+  
+
+  const loadingMarkup = (
+    <SkeletonPage primaryAction>
       <Layout>
         <Layout.Section>
           <Card sectioned>
-            <Stack
-              wrap={false}
-              spacing="extraTight"
-              distribution="trailing"
-              alignment="center"
-            >
-              <Stack.Item fill>
-                <TextContainer spacing="loose">
-                  <Text as="h2" variant="headingMd">
-                    {t("HomePage.heading")}
-                  </Text>
-                  <p>
-                    <Trans
-                      i18nKey="HomePage.yourAppIsReadyToExplore"
-                      components={{
-                        PolarisLink: (
-                          <Link url="https://polaris.shopify.com/" external />
-                        ),
-                        AdminApiLink: (
-                          <Link
-                            url="https://shopify.dev/api/admin-graphql"
-                            external
-                          />
-                        ),
-                        AppBridgeLink: (
-                          <Link
-                            url="https://shopify.dev/apps/tools/app-bridge"
-                            external
-                          />
-                        ),
-                      }}
-                    />
-                  </p>
-                  <p>{t("HomePage.startPopulatingYourApp")}</p>
-                  <p>
-                    <Trans
-                      i18nKey="HomePage.learnMore"
-                      components={{
-                        ShopifyTutorialLink: (
-                          <Link
-                            url="https://shopify.dev/apps/getting-started/add-functionality"
-                            external
-                          />
-                        ),
-                      }}
-                    />
-                  </p>
-                </TextContainer>
-              </Stack.Item>
-              <Stack.Item>
-                <div style={{ padding: "0 20px" }}>
-                  <Image
-                    source={trophyImage}
-                    alt={t("HomePage.trophyAltText")}
-                    width={120}
-                  />
-                </div>
-              </Stack.Item>
-            </Stack>
+            <div style={{ height: "200px" }} />
           </Card>
         </Layout.Section>
-        <Layout.Section>
-          <ProductsCard />
-        </Layout.Section>
       </Layout>
+    </SkeletonPage>
+  )
+
+  const actualPageMarkup = (
+    <Page title="Survey Management">
+      <Tabs tabs={tabs} selected={selected} onSelect={handleTabChange}>
+        <Card>{selected === 0 ? <SurveyCreator /> : <SurveyResults />}</Card>
+      </Tabs>
     </Page>
+  )
+
+  const pageMarkup = isLoading ? loadingMarkup : actualPageMarkup
+  return (
+    <>
+      <TitleBar title={t("HomePage.title")} />
+      
+        <Frame topBar={topBarMarkup}>
+          {pageMarkup}
+        </Frame>
+        </>
+    
   );
 }
