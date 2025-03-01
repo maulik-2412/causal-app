@@ -1,8 +1,12 @@
-// @ts-check
+// @ts-nocheck
+import dotenv from "dotenv";
+dotenv.config();
 import { join } from "path";
 import { readFileSync } from "fs";
 import express from "express";
 import serveStatic from "serve-static";
+
+import mongoose from "mongoose";
 
 import shopify from "./shopify.js";
 import productCreator from "./product-creator.js";
@@ -12,6 +16,10 @@ const PORT = parseInt(
   process.env.BACKEND_PORT || process.env.PORT || "3000",
   10
 );
+
+mongoose.connect(process.env.MONGO_URI
+).then(() => console.log("MongoDB Connected"))
+  .catch(err => console.log(err));
 
 const STATIC_PATH =
   process.env.NODE_ENV === "production"
@@ -68,6 +76,11 @@ app.post("/api/products", async (_req, res) => {
   }
   res.status(status).send({ success: status === 200, error });
 });
+
+app.use("/api/store", require("./routes/storeRoutes"));
+app.use("/api/response", require("./routes/responseRoutes"));
+
+
 
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));

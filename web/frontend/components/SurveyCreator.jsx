@@ -23,16 +23,7 @@ import { DragHandleIcon, DeleteIcon, PlusCircleIcon } from "@shopify/polaris-ico
 export default function SurveyCreator() {
   const [surveyTitle, setSurveyTitle] = useState("")
   const [surveyDescription, setSurveyDescription] = useState("")
-  const [questions, setQuestions] = useState([
-    { id: 1, type: "rating", text: "How would you rate our product?", options: ["1", "2", "3", "4", "5"] },
-    {
-      id: 2,
-      type: "multiple_choice",
-      text: "What features do you like most?",
-      options: ["Quality", "Price", "Design", "Functionality"],
-    },
-    { id: 3, type: "text", text: "Any additional feedback?", options: [] },
-  ])
+  const [questions, setQuestions] = useState([])
   const [activeQuestionId, setActiveQuestionId] = useState(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
@@ -40,7 +31,7 @@ export default function SurveyCreator() {
   const [newOptionText, setNewOptionText] = useState("")
 
   const questionTypes = [
-    { label: "Rating (1-5)", value: "rating" },
+    { label: "Scale", value: "scale" },
     { label: "Multiple Choice", value: "multiple_choice" },
     { label: "Text Response", value: "text" },
     { label: "Yes/No", value: "boolean" },
@@ -50,32 +41,59 @@ export default function SurveyCreator() {
     const newId = questions.length > 0 ? Math.max(...questions.map((q) => q.id)) + 1 : 1
     const newQuestion = {
       id: newId,
-      type: "rating",
+      type: "scale",
       text: "",
-      options: ["1", "2", "3", "4", "5"],
+      options: [],
+      min: 1,
+      max: 5,
+      minLabel: "Poor",
+      maxLabel: "Excellent",
     }
     setQuestions([...questions, newQuestion])
     setActiveQuestionId(newId)
   }
-
+  
   const handleQuestionTypeChange = (value, id) => {
     setQuestions(
       questions.map((q) => {
         if (q.id === id) {
           let options = []
-          if (value === "rating") {
-            options = ["1", "2", "3", "4", "5"]
+          let min = q.min
+          let max = q.max
+          let minLabel = q.minLabel
+          let maxLabel = q.maxLabel
+
+          if (value === "scale") {
+            options = []
+            min = 1
+            max = 5
+            minLabel = "Poor"
+            maxLabel = "Excellent"
           } else if (value === "boolean") {
             options = ["Yes", "No"]
+            min = undefined
+            max = undefined
+            minLabel = undefined
+            maxLabel = undefined
           } else if (value === "multiple_choice") {
             options = ["Option 1"]
+            min = undefined
+            max = undefined
+            minLabel = undefined
+            maxLabel = undefined
+          } else {
+            min = undefined
+            max = undefined
+            minLabel = undefined
+            maxLabel = undefined
           }
-          return { ...q, type: value, options }
+          return { ...q, type: value, options, min, max, minLabel, maxLabel }
         }
         return q
       }),
     )
   }
+  
 
   const handleQuestionTextChange = (value, id) => {
     setQuestions(questions.map((q) => (q.id === id ? { ...q, text: value } : q)))
@@ -136,6 +154,22 @@ export default function SurveyCreator() {
     // In a real app, you might reset the form or redirect after successful save
   }
 
+  const handleScaleMinChange = (value, id) => {
+    setQuestions(questions.map((q) => (q.id === id ? { ...q, min: Number.parseInt(value) || 1 } : q)))
+  }
+
+  const handleScaleMaxChange = (value, id) => {
+    setQuestions(questions.map((q) => (q.id === id ? { ...q, max: Number.parseInt(value) || 5 } : q)))
+  }
+
+  const handleScaleMinLabelChange = (value, id) => {
+    setQuestions(questions.map((q) => (q.id === id ? { ...q, minLabel: value } : q)))
+  }
+
+  const handleScaleMaxLabelChange = (value, id) => {
+    setQuestions(questions.map((q) => (q.id === id ? { ...q, maxLabel: value } : q)))
+  }
+  
   return (
     <Page fullWidth>
       <BlockStack gap="4">
@@ -244,6 +278,53 @@ export default function SurveyCreator() {
                                     placeholder="Enter new option"
                                   />
                                   <Button onClick={() => handleAddOption(question.id)}>Add</Button>
+                                </InlineStack>
+                              </BlockStack>
+                            )}
+                            {question.type === "scale" && (
+                              <BlockStack gap="2">
+                                <Text variant="bodySm" as="p">
+                                  Scale Configuration
+                                </Text>
+                                <InlineStack gap="2" align="start">
+                                  <div style={{ width: "50%" }}>
+                                    <TextField
+                                      label="Min Value"
+                                      type="number"
+                                      value={question.min?.toString() || "1"}
+                                      onChange={(value) => handleScaleMinChange(value, question.id)}
+                                      autoComplete="off"
+                                    />
+                                  </div>
+                                  <div style={{ width: "50%" }}>
+                                    <TextField
+                                      label="Max Value"
+                                      type="number"
+                                      value={question.max?.toString() || "5"}
+                                      onChange={(value) => handleScaleMaxChange(value, question.id)}
+                                      autoComplete="off"
+                                    />
+                                  </div>
+                                </InlineStack>
+                                <InlineStack gap="2" align="start">
+                                  <div style={{ width: "50%" }}>
+                                    <TextField
+                                      label="Min Label"
+                                      value={question.minLabel || ""}
+                                      onChange={(value) => handleScaleMinLabelChange(value, question.id)}
+                                      autoComplete="off"
+                                      placeholder="e.g., Poor"
+                                    />
+                                  </div>
+                                  <div style={{ width: "50%" }}>
+                                    <TextField
+                                      label="Max Label"
+                                      value={question.maxLabel || ""}
+                                      onChange={(value) => handleScaleMaxLabelChange(value, question.id)}
+                                      autoComplete="off"
+                                      placeholder="e.g., Excellent"
+                                    />
+                                  </div>
                                 </InlineStack>
                               </BlockStack>
                             )}
