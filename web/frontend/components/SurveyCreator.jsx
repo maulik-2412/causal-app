@@ -1,5 +1,5 @@
 
-import { useState } from "react"
+import { useState, useEffect } from "react";
 import {
   Card,
   Layout,
@@ -19,8 +19,12 @@ import {
   LegacyCard,
 } from "@shopify/polaris"
 import { DragHandleIcon, DeleteIcon, PlusCircleIcon } from "@shopify/polaris-icons"
+import { useMutation,useQuery } from "react-query"
+import { useAppBridge } from "@shopify/app-bridge-react"
 
 export default function SurveyCreator() {
+  const app=useAppBridge();
+  const shop = new URLSearchParams(location.search).get("shop");
   const [surveyTitle, setSurveyTitle] = useState("")
   const [surveyDescription, setSurveyDescription] = useState("")
   const [questions, setQuestions] = useState([])
@@ -29,6 +33,21 @@ export default function SurveyCreator() {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [questionToDelete, setQuestionToDelete] = useState(null)
   const [newOptionText, setNewOptionText] = useState("")
+
+  const { data: surveyData, isLoading } = useQuery(["survey", shop], async () => {
+    const response = await fetch(`/api/survey?shop=${shop}`);
+    if (!response.ok) throw new Error("Failed to fetch survey");
+    return response.json();
+  }, {
+    onSuccess: (data) => {
+      if (data && data.survey) {
+        setSurveyTitle(data.survey.title || "");
+        setSurveyDescription(data.survey.description || "");
+        setQuestions(data.survey.questions || []);
+      }
+    },
+    retry: false,
+  });
 
   const questionTypes = [
     { label: "Scale", value: "scale" },
@@ -96,7 +115,7 @@ export default function SurveyCreator() {
   
 
   const handleQuestionTextChange = (value, id) => {
-    setQuestions(questions.map((q) => (q.id === id ? { ...q, text: value } : q)))
+    setQuestions(questions.map((q) => (q.id === id ? { ...q, question_text: value } : q)))
   }
 
   const handleDeleteQuestion = (id) => {
@@ -140,16 +159,42 @@ export default function SurveyCreator() {
     )
   }
 
+  const saveSurvey = async (surveyData) => {
+    const response = await fetch("/api/survey", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(surveyData),
+    });
+    
+    if (!response.ok) {
+      throw new Error("Failed to save survey");
+    }
+  
+    return response.json();
+  };
+
+  const mutation = useMutation(saveSurvey, {
+    onSuccess: () => {
+      setShowSuccessModal(true);
+    },
+    onError: (error) => {
+      console.error("Survey save failed:", error);
+      alert("Failed to save survey.");
+    },
+  });
+  
   const handleSaveSurvey = () => {
     // Here you would typically send the data to your backend
-    console.log({
+    const surveyData = {
+      shop:shop,
       title: surveyTitle,
       description: surveyDescription,
       questions,
-    })
+    };
 
-    // Show success modal
-    setShowSuccessModal(true)
+    mutation.mutate(surveyData);
 
     // In a real app, you might reset the form or redirect after successful save
   }
@@ -243,7 +288,7 @@ export default function SurveyCreator() {
 
                             <TextField
                               label="Question Text"
-                              value={question.text}
+                              value={question.question_text}
                               onChange={(value) => handleQuestionTextChange(value, question.id)}
                               autoComplete="off"
                             />
