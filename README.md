@@ -61,6 +61,8 @@ pnpm run dev
 ```
 
 Open the URL generated in your console. Once you grant permission to the app, you can start development.
+Make sure to change store-url in extensionUI/src/SurveyForm.jsx
+I have hard-coded it, as I could not found a way to dynamically fetch store url. A method I used worked in internal frontend, not here.
 
 ## Deployment
 
