@@ -43,9 +43,9 @@ const fetchQuestionsFromBackend = async (shop) => {
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
-    // For debugging - log the raw response text
+   
     const rawText = await response.text();
-    // Try to parse as JSON only if it's actually JSON
+    
     
     let data;
     try {
@@ -92,7 +92,7 @@ const CartQuestionForm = ({shop}) => {
       .then((data) => {
         setQuestions(data)
 
-        // Initialize answers state based on question type
+        
         const initialAnswers = {}
         data.forEach((q) => {
           if (q.type === QUESTION_TYPES.MULTIPLE_CHOICE) {
@@ -252,7 +252,7 @@ const CartQuestionForm = ({shop}) => {
   )
 }
 
-// Page Wrapper Component
+
 export default function SurveyForm() {  
   return (
     <Page narrowWidth>

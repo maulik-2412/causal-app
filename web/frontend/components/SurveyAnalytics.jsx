@@ -25,8 +25,7 @@ export default function SurveyAnalytics({ responses }) {
 
     // Create rating distribution chart
     if (ratingChartRef.current) {
-      const ratingCounts = [0, 0, 0, 0, 0] // 1-5 stars
-      responses.forEach((response) => {
+      const ratingCounts = [0, 0, 0, 0, 0]
         ratingCounts[response.rating - 1]++
       })
 
@@ -39,11 +38,11 @@ export default function SurveyAnalytics({ responses }) {
               label: "Number of Responses",
               data: ratingCounts,
               backgroundColor: [
-                "#F87171", // red for 1 star
-                "#FBBF24", // amber for 2 stars
-                "#FCD34D", // yellow for 3 stars
-                "#34D399", // green for 4 stars
-                "#10B981", // emerald for 5 stars
+                "#F87171", 
+                "#FBBF24", 
+                "#FCD34D", 
+                "#34D399", 
+                "#10B981", 
               ],
               borderWidth: 1,
             },
@@ -75,10 +74,10 @@ export default function SurveyAnalytics({ responses }) {
 
     // Create time-based chart
     if (timeChartRef.current) {
-      // Sort responses by date
+      
       const sortedResponses = [...responses].sort((a, b) => new Date(a.date) - new Date(b.date))
 
-      // Group by date and calculate average rating
+      
       const dateMap = new Map()
       sortedResponses.forEach((response) => {
         const date = response.date

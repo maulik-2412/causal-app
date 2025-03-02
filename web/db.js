@@ -1,14 +1,13 @@
 import mongoose from "mongoose";
 import { configDotenv } from "dotenv";
 configDotenv();
-let isConnected = false; // Track connection status
-
+let isConnected = false; 
 
 
 export const connectDB = async () => {
   if (isConnected) {
     console.log("⚡ Using existing MongoDB connection");
-    return mongoose.connection; // Return the existing connection
+    return mongoose.connection; 
   }
 
   try {

@@ -33,10 +33,9 @@ const allowedOrigins = [
   "https://jewish-singh-wb-bibliographic.trycloudflare.com"
 ];
 
-// Use a single cors configuration
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+   
     if (!origin) return callback(null, true);
     
     if (allowedOrigins.indexOf(origin) !== -1) {
@@ -77,7 +76,7 @@ app.get("/api/survey",async (req,res)=>{
 app.post("/api/survey/submit",async(req,res)=>{
   try {
     const { shop, answers } = req.body;
-    // Find the store by shop domain
+    
     const store = await Store.findOne({ shop });
 
     if (!store) {
@@ -86,11 +85,11 @@ app.post("/api/survey/submit",async(req,res)=>{
     console.log("Received answers:", answers);
     console.log("Store questions:", store.survey.questions);
 
-    // Format responses to match schema
+    
  
 
    
-    // Save response in the database
+    
     const newResponse = new Response({
       store_id: store._id,
       responses: answers
@@ -182,7 +181,7 @@ app.post("/api/surveyQuestions", async (_req, res) => {
     let store = await Store.findOne({ shop });
 
     if (!store) {
-      // **Create new store with survey**
+      
       console.log("Store not found, creating a new store with survey...");
       store = new Store({
         shop,
@@ -205,7 +204,7 @@ app.post("/api/surveyQuestions", async (_req, res) => {
       });
       console.log("New store and survey created for shop:", shop);
     } else {
-      // **Update existing survey**
+      
       console.log("Updating existing survey for shop:", shop);
       store.survey = {
         survey_id: store.survey?.survey_id || new mongoose.Types.ObjectId(),
@@ -225,7 +224,7 @@ app.post("/api/surveyQuestions", async (_req, res) => {
       };
     }
 
-    // **Save the store (create or update)**
+    
     await store.save();
 
     res.json({ success: true, message: "Survey saved successfully", store });
@@ -247,7 +246,7 @@ app.get("/api/surveyQuestions", async (_req, res) => {
     const store = await Store.findOne({ shop });
     
     if (!store || !store.survey) {
-      return res.json({ survey: null }); // No survey found
+      return res.json({ survey: null }); 
     }
     res.json({ survey: store.survey });
   } catch (err) {
@@ -262,15 +261,15 @@ app.get("/api/surveyQuestions", async (_req, res) => {
         return res.status(400).json({ error: "Shop parameter is required" });
       }
   
-      // Find store ID using shop domain
+      
       const store = await Store.findOne({ shop });
       if (!store) {
         return res.status(404).json({ error: "Store not found" });
       }
   
-      // Fetch responses linked to the store
+      
       const responses = await Response.find({ store_id: store._id })
-        .populate("customer_id", "name email") // Populate customer details if available
+        .populate("customer_id", "name email") 
         .sort({ createdAt: -1 });
   
       res.json({ responses });

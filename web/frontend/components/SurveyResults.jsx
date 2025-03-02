@@ -31,7 +31,7 @@ export default function SurveyResults() {
   });
   const responses = data?.responses || [];
   console.log(responses) */
-  // Mock data for survey responses
+  
   // get stats from backend
   const mockResponses = [
     { id: 1, customer: "John Doe", email: "john@example.com", date: "2023-05-15", rating: 4, completed: true },
@@ -92,24 +92,24 @@ export default function SurveyResults() {
     setSortDirection(direction)
   }, [])
 
-  // Filter responses based on search query and filters
+  
   const filteredResponses = responses.filter((response) => {
-    // Filter by search query
+    
     const matchesQuery =
       !queryValue ||
       response.customer.toLowerCase().includes(queryValue.toLowerCase()) ||
       response.email.toLowerCase().includes(queryValue.toLowerCase())
 
-    // Filter by rating
+    
     const matchesRating = selectedRatings.length === 0 || selectedRatings.includes(response.rating.toString())
 
-    // Filter by date range (simplified for demo)
+    // add date filter
    
 
     return matchesQuery && matchesRating 
   })
 
-  // Sort responses
+  
   const sortedResponses = [...filteredResponses].sort((a, b) => {
     if (sortedColumn === 0) {
       return sortDirection === "asc" ? a.customer.localeCompare(b.customer) : b.customer.localeCompare(a.customer)

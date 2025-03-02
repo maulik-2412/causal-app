@@ -185,7 +185,7 @@ export default function SurveyCreator() {
   });
   
   const handleSaveSurvey = () => {
-    // Here you would typically send the data to your backend
+    
     const surveyData = {
       shop:shop,
       title: surveyTitle,
@@ -195,7 +195,7 @@ export default function SurveyCreator() {
 
     mutation.mutate(surveyData);
 
-    // In a real app, you might reset the form or redirect after successful save
+    
   }
 
   const handleScaleMinChange = (value, question_id) => {

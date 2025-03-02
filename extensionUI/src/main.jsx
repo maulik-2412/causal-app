@@ -1,9 +1,9 @@
 import React from "react";
-import ReactDOM from "react-dom/client"; // Import createRoot
+import ReactDOM from "react-dom/client"; 
 import { AppProvider } from "@shopify/polaris";
 
 
-import "@shopify/polaris/build/esm/styles.css"; // Polaris styles
+import "@shopify/polaris/build/esm/styles.css"; 
 import SurveyForm from "./SurveyForm";
 
 
