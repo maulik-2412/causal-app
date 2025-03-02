@@ -17,47 +17,69 @@ import {
 } from "@shopify/polaris"
 
 
-// Dummy question types
+
+
+
+
 const QUESTION_TYPES = {
   TEXT: "text",
   MULTIPLE_CHOICE: "multiple_choice",
-  YES_NO: "yes_no",
+  YES_NO: "boolean",
   SCALE: "scale",
 }
 
-// Dummy backend function that returns all questions
-const fetchQuestionsFromBackend = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        {
-          type: QUESTION_TYPES.TEXT,
-          content: "How did you hear about our store?",
-          placeholder: "Your answer here...",
-        },
-        {
-          type: QUESTION_TYPES.MULTIPLE_CHOICE,
-          content: "What influenced your purchase decision the most?",
-          options: ["Price", "Quality", "Reviews", "Recommendation", "Other"],
-        },
-        {
-          type: QUESTION_TYPES.YES_NO,
-          content: "Would you recommend our products to others?",
-        },
-        {
-          type: QUESTION_TYPES.SCALE,
-          content: "How likely are you to shop with us again?",
-          min: 1,
-          max: 10,
-          minLabel: "Not likely",
-          maxLabel: "Very likely",
-        },
-      ])
-    }, 1000) // Simulate network delay
-  })
+const shop = new URLSearchParams(location.search).get("shop");
+console.log(shop);
+
+const fetchQuestionsFromBackend = async (shop) => {
+  
+  try {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_API_URL}/api/survey?shop=${shop}`,{
+      method:"GET",
+      headers:{"ngrok-skip-browser-warning": "true","Content-Type": "application/json","Host": "causalfunnelstore.myshopify.com"},
+      
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    // For debugging - log the raw response text
+    const rawText = await response.text();
+    // Try to parse as JSON only if it's actually JSON
+    
+    let data;
+    try {
+      data = JSON.parse(rawText);
+      
+      return data.questions ? data.questions : [];
+    } catch (e) {
+      console.error("Failed to parse response as JSON:", e);
+      return [];
+    }
+  } catch (error) {
+    console.error("Error fetching questions:", error)
+    return []
+  }
 }
 
-const CartQuestionForm = () => {
+const submitAnswersToBackend = async (shop, answers) => {
+  
+  try {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_API_URL}/api/survey/submit`, {
+      method: "POST",
+      headers: {
+        "ngrok-skip-browser-warning": "true","Content-Type": "application/json","Host": "causalfunnelstore.myshopify.com",
+      },
+      body: JSON.stringify({ shop:"causalfunnelstore.myshopify.com", answers }),
+    })
+    return response.ok
+  } catch (error) {
+    console.error("Error submitting answers:", error)
+    return false
+  }
+}
+
+const CartQuestionForm = ({shop}) => {
   const [questions, setQuestions] = useState([])
   const [loading, setLoading] = useState(true)
   const [answers, setAnswers] = useState({})
@@ -66,7 +88,7 @@ const CartQuestionForm = () => {
 
   useEffect(() => {
     setLoading(true)
-    fetchQuestionsFromBackend()
+    fetchQuestionsFromBackend(shop)
       .then((data) => {
         setQuestions(data)
 
@@ -74,15 +96,16 @@ const CartQuestionForm = () => {
         const initialAnswers = {}
         data.forEach((q) => {
           if (q.type === QUESTION_TYPES.MULTIPLE_CHOICE) {
-            initialAnswers[q.content] = q.options[0]
+            initialAnswers[q._id] = q.options[0]
           } else if (q.type === QUESTION_TYPES.RATING) {
-            initialAnswers[q.content] = "0"
+            initialAnswers[q._id] = "0"
           } else if (q.type === QUESTION_TYPES.YES_NO) {
-            initialAnswers[q.content] = "no"
+            initialAnswers[q._id] = "no"
           } else if (q.type === QUESTION_TYPES.SCALE) {
-            initialAnswers[q.content] = Math.floor((q.min + q.max) / 2).toString()
+            console.log(q);
+            initialAnswers[q._id] = Math.floor((Number(q.min) + Number(q.max)) / 2).toString();
           } else {
-            initialAnswers[q.content] = ""
+            initialAnswers[q._id] = ""
           }
         })
         setAnswers(initialAnswers)
@@ -92,26 +115,23 @@ const CartQuestionForm = () => {
       })
   }, [])
 
-  const handleAnswerChange = (questionContent, value) => {
-    setAnswers((prev) => ({ ...prev, [questionContent]: value }))
+  const handleAnswerChange = (_id, value) => {
+    setAnswers((prev) => ({ ...prev, [_id]: value }))
   }
 
-  const handleSubmit = () => {
-    // Check if any required answers are empty
-    const emptyAnswers = questions
-      .filter((q) => q.type === QUESTION_TYPES.TEXT && !answers[q.content])
-      .map((q) => q.content)
+  const handleSubmit = async () => {
+    
+    const formattedAnswers = Object.entries(answers).map(([_id, answer]) => ({
+      _id,
+      answer,
+    }));
 
-    if (emptyAnswers.length > 0) {
-      setError(`Please provide answers for: ${emptyAnswers.join(", ")}`)
-      return
+    if (await submitAnswersToBackend(shop, formattedAnswers)) {
+      setSubmitted(true);
+      setError("");
+    } else {
+      setError("Failed to submit responses. Please try again.");
     }
-
-    // Simulate sending data to backend
-    console.log("Submitting answers:", answers)
-
-    setSubmitted(true)
-    setError("")
   }
 
   const renderQuestionInput = (question) => {
@@ -120,8 +140,8 @@ const CartQuestionForm = () => {
         return (
           <TextField
             label=""
-            value={answers[question.content]}
-            onChange={(value) => handleAnswerChange(question.content, value)}
+            value={answers[question._id]}
+            onChange={(value) => handleAnswerChange(question._id, value)}
             placeholder={question.placeholder}
             autoComplete="off"
           />
@@ -132,8 +152,8 @@ const CartQuestionForm = () => {
           <Select
             label=""
             options={question.options.map((option) => ({ label: option, value: option }))}
-            value={answers[question.content]}
-            onChange={(value) => handleAnswerChange(question.content, value)}
+            value={answers[question._id]}
+            onChange={(value) => handleAnswerChange(question._id, value)}
           />
         )
 
@@ -144,44 +164,48 @@ const CartQuestionForm = () => {
           <BlockStack>
             <RadioButton
               label="Yes"
-              checked={answers[question.content] === "yes"}
-              id={`yes-${question.content}`}
-              name={question.content}
-              onChange={() => handleAnswerChange(question.content, "yes")}
+              checked={answers[question._id] === true}
+              id={`yes-${question._id}`}
+              name={question._id}
+              onChange={() => handleAnswerChange(question._id, true)}
             />
             <RadioButton
               label="No"
-              checked={answers[question.content] === "no"}
-              id={`no-${question.content}`}
-              name={question.content}
-              onChange={() => handleAnswerChange(question.content, "no")}
+              checked={answers[question._id] === false}
+              id={`no-${question._id}`}
+              name={question._id}
+              onChange={() => handleAnswerChange(question._id, false)}
             />
           </BlockStack>
         )
 
       case QUESTION_TYPES.SCALE:
+        { const currentValue = Number.parseInt(answers[question._id])
         return (
           <BlockStack>
+            <InlineStack align="center">
+              <Text variant="headingLg" as="p" alignment="center">
+                {currentValue}
+                <Text variant="bodyMd" as="span">
+                  {" "}
+                  / {question.max}
+                </Text>
+              </Text>
+            </InlineStack>
             <RangeSlider
               output
               label=""
               min={question.min}
               max={question.max}
-              value={Number.parseInt(answers[question.content])}
-              onChange={(value) => handleAnswerChange(question.content, value.toString())}
+              value={currentValue}
+              onChange={(value) => handleAnswerChange(question._id, value.toString())}
             />
-            <InlineStack align="space-evenly">
-            <InlineStack gap={400}>
-              <InlineStack>{question.minLabel}</InlineStack>
-              
-            </InlineStack>
-            <InlineStack gap={400}>
-              
-              <InlineStack>{question.maxLabel}</InlineStack>
-            </InlineStack>
+            <InlineStack align="space-between">
+              <Text variant="bodyMd">{question.minLabel}</Text>
+              <Text variant="bodyMd">{question.maxLabel}</Text>
             </InlineStack>
           </BlockStack>
-        )
+        ) }
 
       default:
         return null
@@ -210,7 +234,7 @@ const CartQuestionForm = () => {
           <>
             {questions.map((question, index) => (
               <div key={index} style={{ marginBottom: "1rem" }}>
-                <Text variant="headingMd" as="h2">{question.content}</Text>
+                <Text variant="headingMd" as="h2">{question.question_text}</Text>
                 {renderQuestionInput(question)}
               </div>
             ))}
@@ -229,12 +253,12 @@ const CartQuestionForm = () => {
 }
 
 // Page Wrapper Component
-export default function SurveyForm() {
+export default function SurveyForm() {  
   return (
     <Page narrowWidth>
       <Layout>
         <Layout.Section>
-          <CartQuestionForm />
+          <CartQuestionForm shop="causalfunnelstore.myshopify.com" />
         </Layout.Section>
       </Layout>
     </Page>

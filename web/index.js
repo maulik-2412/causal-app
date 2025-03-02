@@ -6,9 +6,11 @@ import { readFileSync } from "fs";
 import express from "express";
 import serveStatic from "serve-static";
 
+import { connectDB } from "./db.js";
 import cors from "cors"
 import mongoose from "mongoose";
 import Store from './models/Store.js'
+import Response from './models/Responses.js'
 import shopify from "./shopify.js";
 import productCreator from "./product-creator.js";
 import PrivacyWebhookHandlers from "./privacy.js";
@@ -18,19 +20,102 @@ const PORT = parseInt(
   10
 );
 
-mongoose.connect(process.env.MONGO_URI
-).then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log(err));
+connectDB();
+const app = express();
+app.use(express.json());
+app.get("/api/survey",async (req,res)=>{
+  const { shop } = req.query;
+  if (!shop) {
+    return res.status(400).json({ error: "Shop name is required" });
+  }
 
+  try {
+    const store = await Store.findOne({ shop });
 
+    if (!store || !store.survey) {
+      return res.status(404).json({ error: "Survey not found for this shop" });
+    }
+
+    res.json({
+      survey_id: store.survey.survey_id,
+      title: store.survey.title,
+      description: store.survey.description,
+      questions: store.survey.questions,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch survey questions" });
+  }
+})
+
+app.post("/api/survey/submit",async(req,res)=>{
+  try {
+    const { shop, answers } = req.body;
+    // Find the store by shop domain
+    const store = await Store.findOne({ shop });
+
+    if (!store) {
+      return res.status(404).json({ error: "Store not found" });
+    }
+    console.log("Received answers:", answers);
+    console.log("Store questions:", store.survey.questions);
+
+    // Format responses to match schema
+ 
+
+   
+    // Save response in the database
+    const newResponse = new Response({
+      store_id: store._id,
+      responses: answers
+    });
+    console.log(newResponse);
+    await newResponse.save();
+
+    res.status(201).json({ message: "Survey response saved successfully" });
+    console.log('saved');
+  } catch (error) {
+    console.error("Error submitting survey response:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+})
 
 const STATIC_PATH =
   process.env.NODE_ENV === "production"
     ? `${process.cwd()}/frontend/dist`
     : `${process.cwd()}/frontend/`;
 
-const app = express();
-app.use(cors());
+
+/* const allowedOrigins = [
+  "https://causalfunnelstore.myshopify.com",
+  "https://admin.shopify.com",
+  "https://87fc-2401-4900-1f36-49a3-5c44-3432-9456-910b.ngrok-free.app",
+  "http://localhost:5173/"
+    // Add your ngrok URL
+];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, ngrok-skip-browser-warning");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+ */
+/*  app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+})) ; */
+ app.use(cors());
+
 // Set up Shopify authentication and webhook handling
 app.get(shopify.config.auth.path, shopify.auth.begin());
 app.get(
@@ -46,9 +131,14 @@ app.post(
 // If you are adding routes outside of the /api path, remember to
 // also add a proxy rule for them in web/frontend/vite.config.js
 
+
+
 app.use("/api/*", shopify.validateAuthenticatedSession());
 
-app.use(express.json());
+
+
+
+
 
 app.get("/api/products/count", async (_req, res) => {
   const client = new shopify.api.clients.Graphql({
@@ -83,10 +173,11 @@ app.post("/api/products", async (_req, res) => {
 /* app.use("/api/store", require("./routes/storeRoutes"));
 app.use("/api/response", require("./routes/responseRoutes")); */
 
-app.post("/api/survey", async (_req, res) => {
+
+
+app.post("/api/surveyQuestions", async (_req, res) => {
   try {
     const { shop, title, description, questions } = _req.body;
-
     if (!shop) {
       return res.status(400).json({ error: "Shop is required" });
     }
@@ -103,8 +194,8 @@ app.post("/api/survey", async (_req, res) => {
           title,
           description,
           questions: questions.map((q) => ({
-            question_id: new mongoose.Types.ObjectId(),
-            question_text: q.text,
+            question_id: q.question_id,
+            question_text: q.question_text,
             type: q.type,
             options: q.options || [],
             min: q.min,
@@ -148,23 +239,25 @@ app.post("/api/survey", async (_req, res) => {
 });
 
 
-app.get("/api/survey", async (req, res) => {
+
+app.get("/api/surveyQuestions", async (_req, res) => {
   try {
-    const { shop } = req.query;
+    const { shop } = _req.query;
     if (!shop) {
       return res.status(400).json({ error: "Shop parameter is required" });
     }
 
     const store = await Store.findOne({ shop });
+    
     if (!store || !store.survey) {
       return res.json({ survey: null }); // No survey found
     }
-
     res.json({ survey: store.survey });
   } catch (err) {
     console.error("Error fetching survey:", err);
     res.status(500).json({ error: err.message });
   }});
+
 
 
 app.use(shopify.cspHeaders());

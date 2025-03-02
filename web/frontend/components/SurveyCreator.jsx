@@ -35,7 +35,7 @@ export default function SurveyCreator() {
   const [newOptionText, setNewOptionText] = useState("")
 
   const { data: surveyData, isLoading } = useQuery(["survey", shop], async () => {
-    const response = await fetch(`/api/survey?shop=${shop}`);
+    const response = await fetch(`/api/surveyQuestions?shop=${shop}`);
     if (!response.ok) throw new Error("Failed to fetch survey");
     return response.json();
   }, {
@@ -57,11 +57,11 @@ export default function SurveyCreator() {
   ]
 
   const handleAddQuestion = () => {
-    const newId = questions.length > 0 ? Math.max(...questions.map((q) => q.id)) + 1 : 1
+    const newId = questions.length > 0 ? Math.max(...questions.map((q) => q.question_id)) + 1 : 1
     const newQuestion = {
-      id: newId,
+      question_id: newId,
       type: "scale",
-      text: "",
+      question_text: "",
       options: [],
       min: 1,
       max: 5,
@@ -72,10 +72,10 @@ export default function SurveyCreator() {
     setActiveQuestionId(newId)
   }
   
-  const handleQuestionTypeChange = (value, id) => {
+  const handleQuestionTypeChange = (value, question_id) => {
     setQuestions(
       questions.map((q) => {
-        if (q.id === id) {
+        if (q.question_id === question_id) {
           let options = []
           let min = q.min
           let max = q.max
@@ -114,17 +114,17 @@ export default function SurveyCreator() {
   }
   
 
-  const handleQuestionTextChange = (value, id) => {
-    setQuestions(questions.map((q) => (q.id === id ? { ...q, question_text: value } : q)))
+  const handleQuestionTextChange = (value, question_id) => {
+    setQuestions(questions.map((q) => (q.question_id === question_id ? { ...q, question_text: value } : q)))
   }
 
-  const handleDeleteQuestion = (id) => {
-    setQuestionToDelete(id)
+  const handleDeleteQuestion = (question_id) => {
+    setQuestionToDelete(question_id)
     setShowDeleteModal(true)
   }
 
   const confirmDeleteQuestion = () => {
-    setQuestions(questions.filter((q) => q.id !== questionToDelete))
+    setQuestions(questions.filter((q) => q.question_id !== questionToDelete))
     setShowDeleteModal(false)
     setQuestionToDelete(null)
     if (activeQuestionId === questionToDelete) {
@@ -137,7 +137,7 @@ export default function SurveyCreator() {
 
     setQuestions(
       questions.map((q) => {
-        if (q.id === questionId) {
+        if (q.question_id === questionId) {
           return { ...q, options: [...q.options, newOptionText] }
         }
         return q
@@ -149,7 +149,7 @@ export default function SurveyCreator() {
   const handleRemoveOption = (questionId, optionIndex) => {
     setQuestions(
       questions.map((q) => {
-        if (q.id === questionId) {
+        if (q.question_id === questionId) {
           const newOptions = [...q.options]
           newOptions.splice(optionIndex, 1)
           return { ...q, options: newOptions }
@@ -160,7 +160,7 @@ export default function SurveyCreator() {
   }
 
   const saveSurvey = async (surveyData) => {
-    const response = await fetch("/api/survey", {
+    const response = await fetch("/api/surveyQuestions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -174,7 +174,6 @@ export default function SurveyCreator() {
   
     return response.json();
   };
-
   const mutation = useMutation(saveSurvey, {
     onSuccess: () => {
       setShowSuccessModal(true);
@@ -199,20 +198,20 @@ export default function SurveyCreator() {
     // In a real app, you might reset the form or redirect after successful save
   }
 
-  const handleScaleMinChange = (value, id) => {
-    setQuestions(questions.map((q) => (q.id === id ? { ...q, min: Number.parseInt(value) || 1 } : q)))
+  const handleScaleMinChange = (value, question_id) => {
+    setQuestions(questions.map((q) => (q.question_id === question_id ? { ...q, min: Number.parseInt(value) || 1 } : q)))
   }
 
-  const handleScaleMaxChange = (value, id) => {
-    setQuestions(questions.map((q) => (q.id === id ? { ...q, max: Number.parseInt(value) || 5 } : q)))
+  const handleScaleMaxChange = (value, question_id) => {
+    setQuestions(questions.map((q) => (q.question_id === question_id ? { ...q, max: Number.parseInt(value) || 5 } : q)))
   }
 
-  const handleScaleMinLabelChange = (value, id) => {
-    setQuestions(questions.map((q) => (q.id === id ? { ...q, minLabel: value } : q)))
+  const handleScaleMinLabelChange = (value, question_id) => {
+    setQuestions(questions.map((q) => (q.question_id === question_id ? { ...q, minLabel: value } : q)))
   }
 
-  const handleScaleMaxLabelChange = (value, id) => {
-    setQuestions(questions.map((q) => (q.id === id ? { ...q, maxLabel: value } : q)))
+  const handleScaleMaxLabelChange = (value, question_id) => {
+    setQuestions(questions.map((q) => (q.question_id === question_id ? { ...q, maxLabel: value } : q)))
   }
   
   return (
@@ -261,19 +260,19 @@ export default function SurveyCreator() {
                 ) : (
                   <BlockStack gap="4">
                     {questions.map((question) => (
-                      <LegacyCard key={question.id} sectioned>
+                      <LegacyCard key={question.question_id} sectioned>
                         <BlockStack gap="4">
                           <InlineStack align="space-between">
                             <InlineStack gap="2">
                               <Icon source={DragHandleIcon} color="base" />
                               <Text variant="headingSm" as="h3">
-                                Question {question.id}
+                                Question 
                               </Text>
                             </InlineStack>
                             <Button
                               icon={DeleteIcon}
                               tone="critical"
-                              onClick={() => handleDeleteQuestion(question.id)}
+                              onClick={() => handleDeleteQuestion(question.question_id)}
                               accessibilityLabel="Delete question"
                             />
                           </InlineStack>
@@ -283,13 +282,13 @@ export default function SurveyCreator() {
                               label="Question Type"
                               options={questionTypes}
                               value={question.type}
-                              onChange={(value) => handleQuestionTypeChange(value, question.id)}
+                              onChange={(value) => handleQuestionTypeChange(value, question.question_id)}
                             />
 
                             <TextField
                               label="Question Text"
                               value={question.question_text}
-                              onChange={(value) => handleQuestionTextChange(value, question.id)}
+                              onChange={(value) => handleQuestionTextChange(value, question.question_id)}
                               autoComplete="off"
                             />
 
@@ -307,7 +306,7 @@ export default function SurveyCreator() {
                                     <Button
                                       plain
                                       icon={DeleteIcon}
-                                      onClick={() => handleRemoveOption(question.id, index)}
+                                      onClick={() => handleRemoveOption(question.question_id, index)}
                                       accessibilityLabel="Remove option"
                                     />
                                   </InlineStack>
@@ -322,7 +321,7 @@ export default function SurveyCreator() {
                                     autoComplete="off"
                                     placeholder="Enter new option"
                                   />
-                                  <Button onClick={() => handleAddOption(question.id)}>Add</Button>
+                                  <Button onClick={() => handleAddOption(question.question_id)}>Add</Button>
                                 </InlineStack>
                               </BlockStack>
                             )}
@@ -337,7 +336,7 @@ export default function SurveyCreator() {
                                       label="Min Value"
                                       type="number"
                                       value={question.min?.toString() || "1"}
-                                      onChange={(value) => handleScaleMinChange(value, question.id)}
+                                      onChange={(value) => handleScaleMinChange(value, question.question_id)}
                                       autoComplete="off"
                                     />
                                   </div>
@@ -346,7 +345,7 @@ export default function SurveyCreator() {
                                       label="Max Value"
                                       type="number"
                                       value={question.max?.toString() || "5"}
-                                      onChange={(value) => handleScaleMaxChange(value, question.id)}
+                                      onChange={(value) => handleScaleMaxChange(value, question.question_id)}
                                       autoComplete="off"
                                     />
                                   </div>
@@ -356,7 +355,7 @@ export default function SurveyCreator() {
                                     <TextField
                                       label="Min Label"
                                       value={question.minLabel || ""}
-                                      onChange={(value) => handleScaleMinLabelChange(value, question.id)}
+                                      onChange={(value) => handleScaleMinLabelChange(value, question.question_id)}
                                       autoComplete="off"
                                       placeholder="e.g., Poor"
                                     />
@@ -365,7 +364,7 @@ export default function SurveyCreator() {
                                     <TextField
                                       label="Max Label"
                                       value={question.maxLabel || ""}
-                                      onChange={(value) => handleScaleMaxLabelChange(value, question.id)}
+                                      onChange={(value) => handleScaleMaxLabelChange(value, question.question_id)}
                                       autoComplete="off"
                                       placeholder="e.g., Excellent"
                                     />

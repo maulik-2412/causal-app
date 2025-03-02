@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const QuestionSchema = new mongoose.Schema({
-  question_id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+  question_id: {type:Number,required:true},
   question_text: { type: String, required: true },
   type: { type: String, enum: ["scale", "multiple_choice", "text", "boolean"], required: true },
   options: { type: [String], default: [] }, // Used for multiple_choice & boolean

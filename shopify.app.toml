@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "6e13fe07a5e7958aaf8e94fb0215e420"
-application_url = "https://7efd-2401-4900-1f36-49a3-f1ad-f08e-a02-aa9d.ngrok-free.app"
+application_url = "https://87fc-2401-4900-1f36-49a3-5c44-3432-9456-910b.ngrok-free.app"
 embedded = true
 name = "causalApp"
 handle = "causalapp-1"
@@ -19,9 +19,9 @@ scopes = "write_products,write_script_tags"
 
 [auth]
 redirect_urls = [
-  "https://7efd-2401-4900-1f36-49a3-f1ad-f08e-a02-aa9d.ngrok-free.app/auth/callback",
-  "https://7efd-2401-4900-1f36-49a3-f1ad-f08e-a02-aa9d.ngrok-free.app/auth/shopify/callback",
-  "https://7efd-2401-4900-1f36-49a3-f1ad-f08e-a02-aa9d.ngrok-free.app/api/auth/callback"
+  "https://87fc-2401-4900-1f36-49a3-5c44-3432-9456-910b.ngrok-free.app/auth/callback",
+  "https://87fc-2401-4900-1f36-49a3-5c44-3432-9456-910b.ngrok-free.app/auth/shopify/callback",
+  "https://87fc-2401-4900-1f36-49a3-5c44-3432-9456-910b.ngrok-free.app/api/auth/callback"
 ]
 
 [pos]
