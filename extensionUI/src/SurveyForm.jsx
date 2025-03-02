@@ -34,7 +34,7 @@ console.log(shop);
 const fetchQuestionsFromBackend = async (shop) => {
   
   try {
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_API_URL}/api/survey?shop=${shop}`,{
+    const response = await fetch(`/apps/api/survey?shop=${shop}`,{
       method:"GET",
       headers:{"ngrok-skip-browser-warning": "true","Content-Type": "application/json","Host": "causalfunnelstore.myshopify.com"},
       
@@ -65,7 +65,7 @@ const fetchQuestionsFromBackend = async (shop) => {
 const submitAnswersToBackend = async (shop, answers) => {
   
   try {
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_API_URL}/api/survey/submit`, {
+    const response = await fetch(`/apps/api/survey/submit`, {
       method: "POST",
       headers: {
         "ngrok-skip-browser-warning": "true","Content-Type": "application/json","Host": "causalfunnelstore.myshopify.com",

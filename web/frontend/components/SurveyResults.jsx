@@ -20,8 +20,17 @@ import {
 } from "@shopify/polaris"
 import { ViewIcon, ExportIcon } from "@shopify/polaris-icons"
 import SurveyAnalytics from "./SurveyAnalytics"
+import { useQuery } from "react-query"
 
 export default function SurveyResults() {
+  /* const shop = new URLSearchParams(location.search).get("shop");
+  const { data, isLoading } = useQuery(["surveyResponses", shop], async () => {
+    const response = await fetch(`/api/surveyResponses?shop=${shop}`);
+    if (!response.ok) throw new Error("Failed to fetch responses");
+    return response.json();
+  });
+  const responses = data?.responses || [];
+  console.log(responses) */
   // Mock data for survey responses
   // get stats from backend
   const mockResponses = [
@@ -95,9 +104,9 @@ export default function SurveyResults() {
     const matchesRating = selectedRatings.length === 0 || selectedRatings.includes(response.rating.toString())
 
     // Filter by date range (simplified for demo)
-    const matchesDateRange = true // In a real app, you would implement date filtering
+   
 
-    return matchesQuery && matchesRating && matchesDateRange
+    return matchesQuery && matchesRating 
   })
 
   // Sort responses

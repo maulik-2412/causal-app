@@ -11,6 +11,7 @@ import cors from "cors"
 import mongoose from "mongoose";
 import Store from './models/Store.js'
 import Response from './models/Responses.js'
+import Customer from "./models/Customer.js";
 import shopify from "./shopify.js";
 import productCreator from "./product-creator.js";
 import PrivacyWebhookHandlers from "./privacy.js";
@@ -23,6 +24,32 @@ const PORT = parseInt(
 connectDB();
 const app = express();
 app.use(express.json());
+
+const allowedOrigins = [
+  "https://causalfunnelstore.myshopify.com",
+  "https://admin.shopify.com", 
+  "https://87fc-2401-4900-1f36-49a3-5c44-3432-9456-910b.ngrok-free.app",
+  "http://localhost:5173/",
+  "https://jewish-singh-wb-bibliographic.trycloudflare.com"
+];
+
+// Use a single cors configuration
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "ngrok-skip-browser-warning", "Authorization"]
+}));
+
 app.get("/api/survey",async (req,res)=>{
   const { shop } = req.query;
   if (!shop) {
@@ -85,36 +112,6 @@ const STATIC_PATH =
     : `${process.cwd()}/frontend/`;
 
 
-/* const allowedOrigins = [
-  "https://causalfunnelstore.myshopify.com",
-  "https://admin.shopify.com",
-  "https://87fc-2401-4900-1f36-49a3-5c44-3432-9456-910b.ngrok-free.app",
-  "http://localhost:5173/"
-    // Add your ngrok URL
-];
-
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
-
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, ngrok-skip-browser-warning");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-
-  next();
-});
- */
-/*  app.use(cors({
-  origin: allowedOrigins,
-  credentials: true
-})) ; */
- app.use(cors());
 
 // Set up Shopify authentication and webhook handling
 app.get(shopify.config.auth.path, shopify.auth.begin());
@@ -258,7 +255,32 @@ app.get("/api/surveyQuestions", async (_req, res) => {
     res.status(500).json({ error: err.message });
   }});
 
-
+  app.get("/api/surveyResponses", async (req, res) => {
+    try {
+      const { shop } = req.query;
+      if (!shop) {
+        return res.status(400).json({ error: "Shop parameter is required" });
+      }
+  
+      // Find store ID using shop domain
+      const store = await Store.findOne({ shop });
+      if (!store) {
+        return res.status(404).json({ error: "Store not found" });
+      }
+  
+      // Fetch responses linked to the store
+      const responses = await Response.find({ store_id: store._id })
+        .populate("customer_id", "name email") // Populate customer details if available
+        .sort({ createdAt: -1 });
+  
+      res.json({ responses });
+    } catch (error) {
+      console.error("Error fetching survey responses:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+  
+  
 
 app.use(shopify.cspHeaders());
 app.use(serveStatic(STATIC_PATH, { index: false }));
