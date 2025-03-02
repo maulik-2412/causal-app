@@ -13,8 +13,8 @@ const QuestionSchema = new mongoose.Schema({
 
 const SurveySchema = new mongoose.Schema({
   survey_id: { type: mongoose.Schema.Types.ObjectId, auto: true },
-  title: { type: String, required: true },
-  description: { type: String, required: true },
+  title: { type: String },
+  description: { type: String },
   questions: [QuestionSchema], // One survey contains multiple questions
   created_at: { type: Date, default: Date.now }
 });
